@@ -8,6 +8,7 @@
 #include <netdb.h>
 
 #define BUF_SIZE 500
+#define PORT 60000
 
 int main(int argc, char *argv[]) {
     struct addrinfo hints;
@@ -18,10 +19,10 @@ int main(int argc, char *argv[]) {
     ssize_t nread;
     char buf[BUF_SIZE];
 
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s port\n", argv[0]);
-        exit(EXIT_FAILURE);
-    }
+    //if (argc != 2) {
+      //fprintf(stderr, "Usage: %s port\n", argv[0]);
+      //exit(EXIT_FAILURE);
+    //}
 
     memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
@@ -64,6 +65,9 @@ int main(int argc, char *argv[]) {
     /* Read datagrams and echo them back to sender */
 
     for (;;) {
+        char msg33[] = "Hello server";
+        char msg333[] = "Hello RPI";
+        char msg3333[] = "Wrong Message";
         peer_addr_len = sizeof(struct sockaddr_storage);
         nread = recvfrom(
             sfd, buf, BUF_SIZE, 0, (struct sockaddr *) &peer_addr, &peer_addr_len
@@ -89,21 +93,38 @@ int main(int argc, char *argv[]) {
                 fflush(stdout);
             }
             printf("\n");
+            
         }
         else
             fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s));
-
-        if (
+        if(strcmp(buf, msg33) == 0){
+            if (
             sendto(
                 sfd,
-                buf,
-                nread,
+                msg333,
+                strlen(msg333),
                 0,
                 (struct sockaddr *) &peer_addr,
                 peer_addr_len
             ) != nread
         ) {
             fprintf(stderr, "Error sending response\n");
+        
         }
+      }else{
+        if (
+            sendto(
+                sfd,
+                msg3333,
+                strlen(msg3333),
+                0,
+                (struct sockaddr *) &peer_addr,
+                peer_addr_len
+            ) != nread
+        ) {
+            fprintf(stderr, "Error sending response\n");
+        
+        }
+      }
     }
 }

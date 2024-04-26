@@ -8,6 +8,7 @@
 #include <string.h>
 
 #define BUF_SIZE 500
+#define PORT 60000
 
 int main(int argc, char *argv[]) {
     struct addrinfo hints;
@@ -81,9 +82,13 @@ int main(int argc, char *argv[]) {
             perror("read");
             exit(EXIT_FAILURE);
         }
-
-        printf("Received %zd bytes: %s\n", nread, buf);
     }
+        printf("Received %zd bytes: %s\n", nread, buf);
+        for(int i = 0;i < nread; i++){
+                printf("%c", buf[i]);
+                fflush(stdout);
+            }
+        printf("\n");   
 
     exit(EXIT_SUCCESS);
 }

@@ -1,3 +1,5 @@
+--#include <mpu6000.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <linux/i2c-dev.h>
@@ -13,37 +15,50 @@
 #define MPU6000_PWR_MGMT_1 0x6B
 #define MPU6000_SCALE_FACTOR 16384.0
 
-pthread_t t1;
+int mpu(t_accel_data *data);
+
+typedef struct {
+	float accel_x;
+	float accel_y;
+	float accel_z;
+} t_accel_data;
+
+//
+
+//pthread_t t1;
+
+int bucle;
 
 int fd;
 
 void manejador(int sig){
 
-  signal(SIGINT, SIG_DFL);
-  pthread_cancel(t1);
+  bucle = 0;
+
+  //signal(SIGINT, SIG_DFL);
+  //pthread_cancel(t1);
 
 }
 
-
 void medir();
 
-int main(void){
+t_accel_data data;
 
-
-
+int mpu(&data){
 
   signal(SIGINT, manejador);
 
-  if(pthread_create(&t1, NULL, (void*)medir, NULL) != 0){
-    printf("Error creating thread\n");
-    return 1;
-  }
+  //if(pthread_create(&t1, NULL, (void*)medir, NULL) != 0){
+    //printf("Error creating thread\n");
+    //return 1;
+  //}
 
+  //if(pthread_join(t1, NULL) != 0){
+    //printf("Error joining thread\n");
+    //return 1;
+  //}
 
-  if(pthread_join(t1, NULL) != 0){
-    printf("Error joining thread\n");
-    return 1;
-  }
+  medir(data);
 
   printf("ANCEL \n");
 
@@ -53,7 +68,7 @@ int main(void){
 }
 
 
-void medir(){
+void medir(t_accel_data data){
 
   struct i2c_rdwr_ioctl_data packets;
   struct i2c_msg messages[2];
@@ -83,10 +98,8 @@ void medir(){
   char reg = MPU6000_ACCEL_XOUT_H;
   char accel_data[6];
 
-  while(33){
+  while(bucle){
     // Read accelerometer data
-
-
     messages[0].addr = addr;
     messages[0].flags = 0;
     messages[0].len = sizeof(reg);
@@ -108,14 +121,14 @@ void medir(){
     short ay = (accel_data[2] << 8) | accel_data[3];
     short az = (accel_data[4] << 8) | accel_data[5];
 
-    float ax_m_s2 = ((ax / MPU6000_SCALE_FACTOR) * 9.8);
-    float ay_m_s2 = ((ay / MPU6000_SCALE_FACTOR) * 9.8);
-    float az_m_s2 = ((az / MPU6000_SCALE_FACTOR) * 9.8)-2.4;
+    data.accel_x = ((ax / MPU6000_SCALE_FACTOR) * 9.8);
+    data.accel_y = ((ay / MPU6000_SCALE_FACTOR) * 9.8);
+    data.accel_z = ((az / MPU6000_SCALE_FACTOR) * 9.8)-2.4;
 
     // Print the accelerometer data
     system("clear");
-    printf("Accelerometer data:\n ax=%.2f m/s², ay=%.2f m/s², az=%.2f m/s² \n", ax_m_s2, ay_m_s2, az_m_s2);
-    if((ax_m_s2 && ay_m_s2) == 0){
+    printf("Accelerometer data:\n ax=%.2f m/s², ay=%.2f m/s², az=%.2f m/s² \n", data.accel_x, data.accel_y, data.accel_z);
+    if((data.accel_x && data.accel_y) == 0){
       printf("Sensor disconnected");
 
       // Wake up the MPU6000

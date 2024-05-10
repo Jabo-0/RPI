@@ -1,6 +1,6 @@
-LIBS= -lpthread -lm  #Libraries used if needed
+LIBS= -lpthread -lm #Libraries used if needed
 
-SRCS= mpu6000.c
+SRCS= mpu6000.c 
 
 BIN= appAce
 
@@ -14,9 +14,9 @@ $(BIN): $(OBJS)
 		@echo [link] $@
 		$(CXX) -o $@ $(OBJS) $(LDFLAGS) $(LIBS)
 		
-%.o: %.c
+%.o: %.c 
 		@echo [Compile] $<
-		$(CXX) -c $(CFLAGS) $< -o $@
+		$(CXX) -c -Wall $(CFLAGS) $< -o $@
 		
 clean:
 		@rm -f $(OBJS) $(BIN)

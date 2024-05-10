@@ -8,7 +8,7 @@
 #include <netdb.h>
 
 #define BUF_SIZE 500
-#define PORT 60000
+//#define PORT 60000
 
 int main(int argc, char *argv[]) {
     struct addrinfo hints;
@@ -19,10 +19,10 @@ int main(int argc, char *argv[]) {
     ssize_t nread;
     char buf[BUF_SIZE];
 
-    //if (argc != 2) {
-      //fprintf(stderr, "Usage: %s port\n", argv[0]);
-      //exit(EXIT_FAILURE);
-    //}
+    if (argc != 2) {
+      fprintf(stderr, "Usage: %s port\n", argv[0]);
+      exit(EXIT_FAILURE);
+    }
 
     memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */

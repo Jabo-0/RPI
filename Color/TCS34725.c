@@ -1,18 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <linux/i2c-dev.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>
-#include <linux/i2c.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <signal.h>
-
-#define TCS34725_I2C_ADDR 0x29
-#define TCS34725_ENABLE_REG 0x03
-#define TCS34725_CMD_REG 0x80
-#define TCS34725_CMD_REG_RD 0xA0
-#define TCS34725_COLOR_OUT 0x14
+#include <TCS34725.h>
 
 pthread_t t1;
 int fd;
@@ -24,13 +10,9 @@ void manejador(int sig){
 
 }
 
-
 void medir();
 
-int main(void){
-
-
-
+int TCS(void){
 
   signal(SIGINT, manejador);
 
@@ -39,7 +21,6 @@ int main(void){
     fflush(stdout);
     return 1;
   }
-
 
   if(pthread_join(t1, NULL) != 0){
     printf("Error joining thread\n");
@@ -128,37 +109,37 @@ void medir(){
 
     // Convert the color data
 
-    __uint16_t Light = ((color_data[0] << 8) | color_data[1])/256;
-    __uint16_t Red = ((color_data[2] << 8) | color_data[3])/256;
-    __uint16_t Green = ((color_data[4] << 8) | color_data[5])/256;
-    __uint16_t Blue = ((color_data[6] << 8) | color_data[7])/256;
+    t_color_data data;
+
+    data.Light = ((color_data[0] << 8) | color_data[1])/256;
+    data.Red = ((color_data[2] << 8) | color_data[3])/256;
+    data.Green = ((color_data[4] << 8) | color_data[5])/256;
+    data.Blue = ((color_data[6] << 8) | color_data[7])/256;
 
     // Print the color data
 
     system("clear");
-    printf("Light intensity: %d   Red: %d   Green: %d   Blue: %d\n", Light, Red, Green, Blue);
+    printf("Light intensity: %d   Red: %d   Green: %d   Blue: %d\n", data.Light, data.Red, data.Green, data.Blue);
     printf("Color: ");
-    if(Red > 200 && Green > 200 && Blue > 200){
+    if(data.Red > 200 && data.Green > 200 && data.Blue > 200){
       printf("White\n");
-    }else if(Red < 50 && Green < 50 && Blue < 50){
+    }else if(data.Red < 50 && data.Green < 50 && data.Blue < 50){
       printf("Black\n");
-    }else if(Red < 100 && Green > 175 && Blue > 175){
+    }else if(data.Red < 100 && data.Green > 175 && data.Blue > 175){
       printf("Cyan\n");
-    }else if(Red > 175 && Green > 175 && Blue < 100){
+    }else if(data.Red > 175 && data.Green > 175 && data.Blue < 100){
       printf("Yellow\n");
-    }else if(Red > 175 && Green < 100 && Blue > 150){
+    }else if(data.Red > 175 && data.Green < 100 && data.Blue > 150){
       printf("Fuchsia\n");
-    }else if(Red < 100 && Green < 100 && Blue > 175){
+    }else if(data.Red < 100 && data.Green < 100 && data.Blue > 175){
       printf("Blue\n");
-    }else if(Red < 100 && Green > 175 && Blue < 100){
+    }else if(data.Red < 100 && data.Green > 175 && data.Blue < 100){
       printf("Green\n");
-    }else if(Red > 175 && Green < 100 && Blue < 100){
+    }else if(data.Red > 175 && data.Green < 100 && data.Blue < 100){
       printf("Red\n");
     }else{
       printf("Gray\n");
     }
-
-
     fflush(stdout);
 
     sleep(1);

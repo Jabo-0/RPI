@@ -8,7 +8,40 @@
 #include <netdb.h>
 
 #define BUF_SIZE 500
+#define MPU6000_SCALE_FACTOR 16384.0
 //#define PORT 60000
+
+
+
+typedef struct {
+	float accel_x;
+	float accel_y;
+	float accel_z;
+} t_accel_data;
+/*
+typedef struct{
+    __uint16_t Red;
+    __uint16_t Green;
+    __uint16_t Blue;
+    __uint16_t Light;
+}t_color_data;
+
+
+typedef struct{
+    t_accel_data[10] accel_data;
+    t_color_data[10] color_data;
+}t_send_data;
+*/
+
+typedef struct{
+    uint16_t Red;
+    uint16_t Green;
+    uint16_t Blue;
+    uint16_t Light;
+    float accel_x;
+    float accel_y; 
+    float accel_z;
+}data_received;
 
 int main(int argc, char *argv[]) {
     struct addrinfo hints;
@@ -17,7 +50,36 @@ int main(int argc, char *argv[]) {
     struct sockaddr_storage peer_addr;
     socklen_t peer_addr_len;
     ssize_t nread;
-    char buf[BUF_SIZE];
+    uint8_t buf[100];
+    data_received datos[10] = {0};
+
+    float acc_x_min;
+    float acc_x_max;
+    float acc_x_media;
+    float acc_y_min;
+    float acc_y_max;
+    float acc_y_media;
+    float acc_z_min;
+    float acc_z_max;
+    float acc_z_media;
+
+    uint16_t red_min;
+    uint16_t red_max;
+    uint16_t red_media;
+    uint16_t green_min;
+    uint16_t green_max;
+    uint16_t green_media;
+    uint16_t blue_min;
+    uint16_t blue_max;
+    uint16_t blue_media;
+    uint16_t light_min;
+    uint16_t light_max;
+    uint16_t light_media;
+    
+
+    //char buf[BUF_SIZE];
+    
+
 
     if (argc != 2) {
       fprintf(stderr, "Usage: %s port\n", argv[0]);
@@ -69,62 +131,133 @@ int main(int argc, char *argv[]) {
         char msg333[] = "Hello RPI";
         char msg3333[] = "Wrong Message";
         peer_addr_len = sizeof(struct sockaddr_storage);
-        nread = recvfrom(
-            sfd, buf, BUF_SIZE, 0, (struct sockaddr *) &peer_addr, &peer_addr_len
+        nread = recvfrom(sfd, buf, sizeof(buf), 0, (struct sockaddr *) &peer_addr, &peer_addr_len
         );
         if (nread == -1)
                 continue;               /* Ignore failed request */
 
         char host[NI_MAXHOST], service[NI_MAXSERV];
 
-        s = getnameinfo(
-            (struct sockaddr *) &peer_addr,
-            peer_addr_len,
-            host,
-            NI_MAXHOST,
-            service,
-            NI_MAXSERV,
-            NI_NUMERICSERV
-        );
+        s = getnameinfo((struct sockaddr *) &peer_addr, peer_addr_len, host, NI_MAXHOST, service, NI_MAXSERV, NI_NUMERICSERV );
         if (s == 0){
             //printf("Received %zd bytes from %s:%s\n", nread, host, service);
-            for(int i = 0;i < nread; i++){
-                printf("%c", buf[i]);
-                fflush(stdout);
+            for(int i = 0;i < 10; i++){
+
+                //aqui hay que hacer los calculos chungos de cada medida
+                datos[i].Red = buf[i*10];
+                datos[i].Green = buf[i*10+1];
+                datos[i].Blue = buf[i*10+2];
+                datos[i].Light = buf[i*10+3];
+                datos[i].accel_x = (((buf[i*10+4]<<8) | buf[i*10+5])/MPU6000_SCALE_FACTOR)*9.81;
+                datos[i].accel_y = (((buf[i*10+6]<<8) | buf[i*10+7])/MPU6000_SCALE_FACTOR)*9.81;
+                datos[i].accel_z = (((buf[i*10+8]<<8) | buf[i*10+9])/MPU6000_SCALE_FACTOR)*9.81;
+
+
+                if(datos[i].Red > red_max){
+                    red_max = datos[i].Red;
+                }
+                if(datos[i].Red < red_min){
+                    red_min = datos[i].Red;
+                }
+                red_media += datos[i].Red;
+
+                if(datos[i].Green > green_max){
+                    green_max = datos[i].Green;
+                }
+                if(datos[i].Green < green_min){
+                    green_min = datos[i].Green;
+                }
+                green_media += datos[i].Green;
+
+                if(datos[i].Blue > blue_max){
+                    blue_max = datos[i].Blue;
+                }
+                if(datos[i].Blue < blue_min){
+                    blue_min = datos[i].Blue;
+                }
+                blue_media += datos[i].Blue;
+
+                if(datos[i].Light > light_max){
+                    light_max = datos[i].Light;
+                }
+                if(datos[i].Light < light_min){
+                    light_min = datos[i].Light;
+                }
+                light_media += datos[i].Light;
+
+                if(datos[i].accel_x > acc_x_max){
+                    acc_x_max = datos[i].accel_x;
+                }
+                if(datos[i].accel_x < acc_x_min){
+                    acc_x_min = datos[i].accel_x;
+                }
+                acc_x_media += datos[i].accel_x;
+
+                if(datos[i].accel_y > acc_y_max){
+                    acc_y_max = datos[i].accel_y;
+                }
+                if(datos[i].accel_y < acc_y_min){
+                    acc_y_min = datos[i].accel_y;
+                }
+                acc_y_media += datos[i].accel_y;
+
+                if(datos[i].accel_z > acc_z_max){
+                    acc_z_max = datos[i].accel_z;
+                }
+                if(datos[i].accel_z < acc_z_min){
+                    acc_z_min = datos[i].accel_z;
+                }
+                acc_z_media += datos[i].accel_z;
+
+
+
             }
-            printf("\n");
+
+            acc_x_media = acc_x_media/10;
+            acc_y_media = acc_y_media/10;
+            acc_z_media = acc_z_media/10;
+            red_media = red_media/10;
+            green_media = green_media/10;
+            blue_media = blue_media/10;
+            light_media = light_media/10;
+            system("clear");
+            printf("Maximo aceleracion en x: %f\n", acc_x_max);
+            printf("Minimo aceleracion en x: %f\n", acc_x_min);
+            printf("Media aceleracion en x: %f\n", acc_x_media);
+            printf("Maximo aceleracion en y: %f\n", acc_y_max);
+            printf("Minimo aceleracion en y: %f\n", acc_y_min);
+            printf("Media aceleracion en y: %f\n", acc_y_media);
+            printf("Maximo aceleracion en z: %f\n", acc_z_max);
+            printf("Minimo aceleracion en z: %f\n", acc_z_min);
+            printf("Media aceleracion en z: %f\n", acc_z_media);
+            printf("Maximo Red: %d\n", red_max);
+            printf("Minimo Red: %d\n", red_min);
+            printf("Media Red: %d\n", red_media);
+            printf("Maximo Green: %d\n", green_max);
+            printf("Minimo Green: %d\n", green_min);
+            printf("Media Green: %d\n", green_media);
+            printf("Maximo Blue: %d\n", blue_max);
+            printf("Minimo Blue: %d\n", blue_min);
+            printf("Media Blue: %d\n", blue_media);
+            printf("Maximo Light: %d\n", light_max);
+            printf("Minimo Light: %d\n", light_min);
+            printf("Media Light: %d\n", light_media);
+
             
         }
         else
             fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s));
         if(strcmp(buf, msg33) == 0){
-            if (
-            sendto(
-                sfd,
-                msg333,
-                strlen(msg333),
-                0,
-                (struct sockaddr *) &peer_addr,
-                peer_addr_len
-            ) != nread
-        ) {
+            if ( sendto( sfd, msg333, strlen(msg333),0,(struct sockaddr *) &peer_addr,peer_addr_len) != nread) {
             fprintf(stderr, "Error sending response\n");
-        
         }
       }else{
-        if (
-            sendto(
-                sfd,
-                msg3333,
-                strlen(msg3333),
-                0,
-                (struct sockaddr *) &peer_addr,
-                peer_addr_len
-            ) != nread
-        ) {
+        if (sendto( sfd, msg3333, strlen(msg3333), 0, (struct sockaddr *) &peer_addr, peer_addr_len) != nread) {
             fprintf(stderr, "Error sending response\n");
         
         }
       }
     }
 }
+
+

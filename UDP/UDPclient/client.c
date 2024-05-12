@@ -17,12 +17,12 @@
 #define BUF_SIZE 500
 //#define PORT 60000
 
-int sfd , bucle;
-
+int sfd;
+int bucle = 33;
 
 pthread_t t1, t2;
 
-void manejador(int sig){
+void handler(int sig){
 
   signal(SIGINT, SIG_DFL);
   pthread_cancel(t1);
@@ -33,6 +33,8 @@ void manejador(int sig){
 }
 
 // Acelerometer
+
+void mpu();
 
 #define MPU6000_I2C_ADDR 0x68
 #define MPU6000_ACCEL_XOUT_H 0x3B
@@ -50,6 +52,8 @@ typedef struct {
 
 //Color sensor
 
+void tcs();
+
 #define TCS34725_I2C_ADDR 0x29
 #define TCS34725_ENABLE_REG 0x03
 #define TCS34725_CMD_REG 0x80
@@ -65,6 +69,7 @@ typedef struct{
     __uint8_t Light;
 }t_color_data;
 
+//-----------------
 
 typedef struct{
     char data[10];
@@ -77,60 +82,47 @@ t_color_data tcs_udp[10];
 
 t_send_data send_data[10];
 
-
-void udp_client(int argc, char *argv[]);
-void mpu();
-void tcs();
-
 int main(int argc, char *argv[]) {
 
-  signal(SIGINT, manejador);
-  printf("inicio program\n");
-            fflush(stdout);
+  struct addrinfo hints;
+  struct addrinfo *result, *rp;
+  int s, j, x;
+  size_t len;
+  ssize_t nread;
+  char buf[BUF_SIZE];
+  char bufOut[100];
 
+  signal(SIGINT, handler);
+
+  printf("Client start\n");
+  fflush(stdout);
 
   if(pthread_create(&t1, NULL, (void*)mpu, NULL) != 0){
     printf("Error creating thread\n");
     fflush(stdout);
     return 1;
   }
+
   if(pthread_create(&t2, NULL, (void*)tcs, NULL) != 0){
     printf("Error creating thread\n");
     fflush(stdout);
     return 1;
   }
 
-
-  printf("udp client start uwu\n");
-            fflush(stdout);
-    struct addrinfo hints;
-    struct addrinfo *result, *rp;
-    int s, j;
-    size_t len;
-    ssize_t nread;
-    char buf[BUF_SIZE];
-
-    if (argc < 3) {
-        fprintf(stderr, "Usage: %s host port msg...\n", argv[0]);
-        exit(EXIT_FAILURE);
-    }
-    printf("argus uwu\n");
-            fflush(stdout);
-
-    /* Obtain address(es) matching host/port */
-
-      bucle = 33;
+  if (argc < 3) {
+      fprintf(stderr, "Usage: %s host port msg...\n", argv[0]);
+      exit(EXIT_FAILURE);
+  }
 
   while(bucle){
+
+    /* Obtain address(es) matching host/port */
 
     memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
     hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
     hints.ai_flags = 0;
     hints.ai_protocol = 0;          /* Any protocol */
-
-    printf("memo\n");
-            fflush(stdout);
 
     s = getaddrinfo(argv[1], argv[2], &hints, &result);
     if (s != 0) {
@@ -143,11 +135,6 @@ int main(int argc, char *argv[]) {
     If socket(2) (or connect(2)) fails, we (close the socket
     and) try the next address. */
 
-        printf("33 33 33 33 33 33\n");
-            fflush(stdout);
-
-
-
     for (rp = result; rp != NULL; rp = rp->ai_next) {
         sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
         if (sfd == -1)
@@ -158,8 +145,6 @@ int main(int argc, char *argv[]) {
 
         close(sfd);
     }
-    printf("EMPIEZO uwu\n");
-            fflush(stdout);
 
     if (rp == NULL) {               /* No address succeeded */
         fprintf(stderr, "Could not connect\n");
@@ -168,8 +153,6 @@ int main(int argc, char *argv[]) {
 
     freeaddrinfo(result);           /* No longer needed */
 
-    printf("EMPId owom\n");
-            fflush(stdout);
     /* Send remaining command-line arguments as separate
     datagrams, and read responses from server */
     for(int i = 0; i < 10; i++){
@@ -184,25 +167,33 @@ int main(int argc, char *argv[]) {
       send_data[i].data[7] = mpu_udp[i].accel_y;
       send_data[i].data[8] = mpu_udp[i].accel_z >> 8;
       send_data[i].data[9] = mpu_udp[i].accel_z;
-      printf("Accelerometer data:\n ax=%d\n", tcs_udp[i].Green);
+
+      ///*
+      float accel_x_data = (mpu_udp[i].accel_x/MPU6000_SCALE_FACTOR)*9.8;
+      printf("ite: %d green:%d  red: %d ax: %.2f \n", i,tcs_udp[i].Green, tcs_udp[i].Red, accel_x_data);
       fflush(stdout);
-      
+      //*/
     }
-    printf("EMPId awa\n");
-            fflush(stdout);
 
-  for(int i = 0; i < 10; i++){
-    for (j = 0; j < 10; j++){
+    x = 0;
 
-        if (write(sfd, send_data[i].data[j], 8) != 8) {
-            //fprintf(stderr, "partial/failed write\n");
-            //fflush(stdout);
-            //exit(EXIT_FAILURE);
-        }
+    for(int i = 0; i < 10; i++){
+      for(int j = 0; j < 10; j++){
+        bufOut[x] = send_data[i].data[j];
+        x++;
+      }
     }
-  }
-      printf("acabe envio\n");
-            fflush(stdout);
+
+    x = write(sfd, bufOut, 100);
+
+    if (x != 100) {
+          fprintf(stderr, "partial/failed write\n");
+          fflush(stdout);
+          //exit(EXIT_FAILURE);
+    }
+
+    printf("Send %d bytes\n", x);
+    fflush(stdout);
 
         //nread = read(sfd, buf, BUF_SIZE);
         //if (nread == -1) {
@@ -217,17 +208,11 @@ int main(int argc, char *argv[]) {
         //        printf("%c", buf[i]);
         //        fflush(stdout);
         //    }
-        printf("\n"); 
-        printf("Roger roger\n");
-            fflush(stdout);  
-
-
-printf("mimimimimimi\n");
-            fflush(stdout);
+    printf("mimimimimimi\n");
+    fflush(stdout);
     sleep(10);
     printf("I wake up\n");
-            fflush(stdout);
-
+    fflush(stdout);
     }
     
 
@@ -243,7 +228,7 @@ printf("mimimimimimi\n");
     return 1;
   }
 
-  printf("ANCELAO \n");
+  printf("\n Program terminated.\n");
 
   close(fd_mpu);
   close(fd_tcs);
@@ -254,12 +239,7 @@ printf("mimimimimimi\n");
 
 //hay que cambirle muchas cosas a esto para adaptarlo
 
-
-
-
-
 //Acelerometer
-
 
 void mpu(){
 
@@ -271,11 +251,9 @@ void mpu(){
 
   uint8_t jota;
 
-  t_accel_data data_mpu;
-
-  printf("Hello and welcome to the accelerometer program\n");
+  printf("Accelerometer started\n");
   fflush(stdout);
-  sleep(1);
+  
   sprintf(i2cFile, "/dev/i2c-%d", device);
   fd_mpu = open(i2cFile,O_RDWR);
   ioctl(fd_mpu,I2C_SLAVE,addr);
@@ -319,11 +297,13 @@ void mpu(){
     mpu_udp[jota].accel_z = (accel_data[4] << 8) | accel_data[5];
 
     // Print the accelerometer data
-    /*
-    system("clear");
-    printf("Accelerometer data:\n ax=%.2f m/s², ay=%.2f m/s², 
-      az=%.2f m/s² \n", mpu_udp[jota].accel_x, mpu_udp[jota].accel_y, mpu_udp[jota].accel_z);
-    */
+    ///*
+    float accel_x_data = (mpu_udp[jota].accel_x/MPU6000_SCALE_FACTOR)*9.8;
+    float accel_y_data = (mpu_udp[jota].accel_y/MPU6000_SCALE_FACTOR)*9.8;
+    float accel_z_data = (mpu_udp[jota].accel_z/MPU6000_SCALE_FACTOR)*9.8;
+    printf("ite: %d x: %.2f   y: %.2f  z: %.2f \n", jota, accel_x_data, accel_y_data, accel_z_data);
+    fflush(stdout);
+    //*/
     if((mpu_udp[jota].accel_x && mpu_udp[jota].accel_y) == 0){
       printf("Sensor disconnected");
 
@@ -341,14 +321,13 @@ void mpu(){
 
       }
             
-      if(jota < 10)
+      if(jota < 9)
         jota++;
       else jota = 0;
-    // Sleep for 3 seconds
+    // Sleep for 1 seconds
     sleep(1);
   }
 }
-
 
 //Color Sensor
 
@@ -362,9 +341,9 @@ void tcs(){
 
   uint8_t ca;
 
-  printf("Hello and welcome to the color sensor program\n");
+  printf("Color sensor start\n");
   fflush(stdout);
-  sleep(1);
+
   sprintf(i2cFile, "/dev/i2c-%d", device);
   fd_tcs = open(i2cFile,O_RDWR);
 
@@ -372,7 +351,6 @@ void tcs(){
     printf("Error in I2C\n");
     fflush(stdout);
   }
-
   // Wake up the TCS34725
   char data[2];
   data[0] = TCS34725_CMD_REG; 
@@ -432,43 +410,17 @@ void tcs(){
     tcs_udp[ca].Green = ((raw_color_data[4] << 8) | raw_color_data[5])/256;
     tcs_udp[ca].Blue = ((raw_color_data[6] << 8) | raw_color_data[7])/256;
 
-    u_int8_t x = ((raw_color_data[0] << 8) | raw_color_data[1])/256;
-
+    ///*
+    printf("Light intensity: %d   Red: %d   Green: %d   Blue: %d   ite: %d\n", tcs_udp[ca].Light, tcs_udp[ca].Red, tcs_udp[ca].Green, tcs_udp[ca].Blue, ca);    
+    fflush(stdout);
+    //*/
     
-    if(ca < 10)
+    if(ca < 9)
         ca++;
       else ca = 0;
 
     sleep(1);
 
-    // Print the color data
-    
-    //system("clear");
-    printf("Light intensity: %d   Red: %d   Green: %d   Blue: %d   x: %d\n", tcs_udp[ca].Light, tcs_udp[ca].Red, tcs_udp[ca].Green, tcs_udp[ca].Blue, x);
-    printf("Color: ");
-    fflush(stdout);
-    /*
-    if(color_data.Red > 200 && color_data.Green > 200 && color_data.Blue > 200){
-      printf("White\n");
-    }else if(color_data.Red < 50 && color_data.Green < 50 && color_data.Blue < 50){
-      printf("Black\n");
-    }else if(color_data.Red < 100 && color_data.Green > 175 && color_data.Blue > 175){
-      printf("Cyan\n");
-    }else if(color_data.Red > 175 && color_data.Green > 175 && color_data.Blue < 100){
-      printf("Yellow\n");
-    }else if(color_data.Red > 175 && color_data.Green < 100 && color_data.Blue > 150){
-      printf("Fuchsia\n");
-    }else if(color_data.Red < 100 && color_data.Green < 100 && color_data.Blue > 175){
-      printf("Blue\n");
-    }else if(color_data.Red < 100 && color_data.Green > 175 && color_data.Blue < 100){
-      printf("Green\n");
-    }else if(color_data.Red > 175 && color_data.Green < 100 && color_data.Blue < 100){
-      printf("Red\n");
-    }else{
-      printf("Gray\n");
-    }
-    fflush(stdout);
-    */
   }
 }
 

@@ -8,7 +8,7 @@
 #include <netdb.h>
 
 #define BUF_SIZE 500
-#define MPU6000_SCALE_FACTOR 16384.0
+#define MPU6000_SCALE_FACTOR 16384
 //#define PORT 60000
 
 
@@ -34,13 +34,13 @@ typedef struct{
 */
 
 typedef struct{
-    uint16_t Red;
-    uint16_t Green;
-    uint16_t Blue;
-    uint16_t Light;
-    uint16_t accel_x;
-    uint16_t accel_y;
-    uint16_t accel_z;
+    uint8_t Red;
+    uint8_t Green;
+    uint8_t Blue;
+    uint8_t Light;
+    int16_t accel_x;
+    int16_t accel_y;
+    int16_t accel_z;
     float f_accel_x;
     float f_accel_y; 
     float f_accel_z;
@@ -154,10 +154,9 @@ int main(int argc, char *argv[]) {
                 datos[i].accel_x = ((buf[i*10+4]<<8) | buf[i*10+5]);
                 datos[i].accel_y = ((buf[i*10+6]<<8) | buf[i*10+7]);
                 datos[i].accel_z = ((buf[i*10+8]<<8) | buf[i*10+9]);
-                datos[i].f_accel_x = (datos[i].accel_x/MPU6000_SCALE_FACTOR)*9.81;
-                datos[i].f_accel_y = (datos[i].accel_y/MPU6000_SCALE_FACTOR)*9.81;
-                datos[i].f_accel_z = (datos[i].accel_z/MPU6000_SCALE_FACTOR)*9.81;
-
+                datos[i].f_accel_x = (datos[i].accel_x*9.81)/MPU6000_SCALE_FACTOR;
+                datos[i].f_accel_y = (datos[i].accel_y*9.81)/MPU6000_SCALE_FACTOR;
+                datos[i].f_accel_z = (datos[i].accel_z*9.81)/MPU6000_SCALE_FACTOR;
 
 
                 if(datos[i].Red > red_max){
@@ -209,7 +208,7 @@ int main(int argc, char *argv[]) {
                 acc_y_media += datos[i].f_accel_y;
 
                 if(datos[i].f_accel_z > acc_z_max){
-                    acc_z_max = datos[i].accel_z;
+                    acc_z_max = datos[i].f_accel_z;
                 }
                 if(datos[i].f_accel_z < acc_z_min){
                     acc_z_min = datos[i].f_accel_z;
@@ -250,26 +249,26 @@ int main(int argc, char *argv[]) {
             printf("Min Light: %d\n", light_min);
             printf("Mean Light: %d\n", light_media);
 
-            acc_x_min = 65500;
-             acc_x_max = 0;
+             acc_x_min = 32767;
+             acc_x_max = -32768;
              acc_x_media = 0;
-             acc_y_min = 65500;
-             acc_y_max = 0;
+             acc_y_min = 32767;
+             acc_y_max = -32768;
              acc_y_media = 0;
-             acc_z_min = 65500;
-             acc_z_max  = 0;
+             acc_z_min = 32767;
+             acc_z_max  = -32768;
              acc_z_media = 0;
 
-             red_min = 65500;
+             red_min = 256;
              red_max = 0;
              red_media = 0;
-             green_min = 65500;
+             green_min = 256;
              green_max = 0;
              green_media = 0;
-             blue_min = 65500;
+             blue_min = 256;
              blue_max = 0;
              blue_media = 0;
-             light_min  = 65500;
+             light_min  = 256;
              light_max = 0;
              light_media = 0 ;
              sprintf(ack, "received %d bytes", nread);
@@ -285,8 +284,8 @@ int main(int argc, char *argv[]) {
       }else{
         if (sendto( sfd, msg3333, strlen(msg3333), 0, (struct sockaddr *) &peer_addr, peer_addr_len) != nread) {
             fprintf(stderr, "Error sending response\n");
-        }
         }*/
+        }
       
     }
 }

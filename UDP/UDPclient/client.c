@@ -168,7 +168,7 @@ int main(int argc, char *argv[]) {
       send_data[i].data[8] = mpu_udp[i].accel_z >> 8;
       send_data[i].data[9] = mpu_udp[i].accel_z;
 
-      ///*
+      /*
       float accel_x_data = (mpu_udp[i].accel_x/MPU6000_SCALE_FACTOR)*9.8;
       uint16_t aux = send_data[i].data[4] << 8 | send_data[i].data[5];
       float accel_x_data2 = (aux/MPU6000_SCALE_FACTOR)*9.8;
@@ -197,24 +197,32 @@ int main(int argc, char *argv[]) {
     printf("Send %d bytes\n", x);
     fflush(stdout);
 
-        //nread = read(sfd, buf, BUF_SIZE);
-        //if (nread == -1) {
+    buf[0] = 0;
+
+    nread = read(sfd, buf, BUF_SIZE);
+    if (nread == -1) {
+      printf("Transmission failed\n");
+      fflush(stdout); 
             //perror("read");
             //exit(EXIT_FAILURE);
         //}
+    }else{
 
     //recepcion
 
-        //printf("Received %zd bytes: %s\n", nread, buf);
-        //for(int i = 0;i < nread; i++){
-        //        printf("%c", buf[i]);
-        //        fflush(stdout);
-        //    }
-    printf("mimimimimimi\n");
-    fflush(stdout);
+      printf("Received %zd bytes\n", nread);
+      fflush(stdout);
+
+      if(buf[0] == x){
+          printf("Transmission correct\n");
+          fflush(stdout);
+      }else{
+          printf("Transmission incomplete\n");
+          fflush(stdout); 
+
+      }
+    }
     sleep(10);
-    printf("I wake up\n");
-    fflush(stdout);
     }
     
 
@@ -297,7 +305,7 @@ void mpu(){
     mpu_udp[jota].accel_z = (accel_data[4] << 8) | accel_data[5];
 
     // Print the accelerometer data
-    ///*
+    /*
     float accel_x_data = (mpu_udp[jota].accel_x*9.8)/MPU6000_SCALE_FACTOR;
     float accel_y_data = (mpu_udp[jota].accel_y*9.8)/MPU6000_SCALE_FACTOR;
     float accel_z_data = (mpu_udp[jota].accel_z*9.8)/MPU6000_SCALE_FACTOR;
@@ -410,7 +418,7 @@ void tcs(){
     tcs_udp[ca].Green = ((raw_color_data[4] << 8) | raw_color_data[5])/256;
     tcs_udp[ca].Blue = ((raw_color_data[6] << 8) | raw_color_data[7])/256;
 
-    ///*
+    /*
     printf("Light intensity: %d   Red: %d   Green: %d   Blue: %d   ite: %d\n", tcs_udp[ca].Light, tcs_udp[ca].Red, tcs_udp[ca].Green, tcs_udp[ca].Blue, ca);    
     fflush(stdout);
     //*/

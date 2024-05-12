@@ -133,6 +133,7 @@ int main(int argc, char *argv[]) {
         char msg33[] = "Hello server";
         char msg333[] = "Hello RPI";
         char msg3333[] = "Wrong Message";
+        char ack[];
         peer_addr_len = sizeof(struct sockaddr_storage);
         nread = recvfrom(sfd, buf, sizeof(buf), 0, (struct sockaddr *) &peer_addr, &peer_addr_len);
         if (nread == -1)
@@ -271,19 +272,22 @@ int main(int argc, char *argv[]) {
              light_min  = 65500;
              light_max = 0;
              light_media = 0 ;
+            fprintf(ack,"recived %d bytes", nread);
+             if ( sendto( sfd, ack, strlen(ack),0,(struct sockaddr *) &peer_addr,peer_addr_len) != strlen(ack)){
+                 fprintf(stderr, "Error sending response\n");
+             }
         }
         else
             fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s));
-        if(strcmp(buf, msg33) == 0){
-            if ( sendto( sfd, msg333, strlen(msg333),0,(struct sockaddr *) &peer_addr,peer_addr_len) != nread) {
-            fprintf(stderr, "Error sending response\n");
+        /*if(strcmp(buf, msg33) == 0){
+            
         }
       }else{
         if (sendto( sfd, msg3333, strlen(msg3333), 0, (struct sockaddr *) &peer_addr, peer_addr_len) != nread) {
             fprintf(stderr, "Error sending response\n");
-        
         }
-      }
+        }*/
+      
     }
 }
 

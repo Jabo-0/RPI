@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
     uint16_t light_min;
     uint16_t light_max;
     uint16_t light_media;
-    
+    char c_nread;
 
     //char buf[BUF_SIZE];
     
@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
         char msg33[] = "Hello server";
         char msg333[] = "Hello RPI";
         char msg3333[] = "Wrong Message";
-        char ack[];
+        char ack[50] ;
         peer_addr_len = sizeof(struct sockaddr_storage);
         nread = recvfrom(sfd, buf, sizeof(buf), 0, (struct sockaddr *) &peer_addr, &peer_addr_len);
         if (nread == -1)
@@ -272,8 +272,8 @@ int main(int argc, char *argv[]) {
              light_min  = 65500;
              light_max = 0;
              light_media = 0 ;
-            fprintf(ack,"recived %d bytes", nread);
-             if ( sendto( sfd, ack, strlen(ack),0,(struct sockaddr *) &peer_addr,peer_addr_len) != strlen(ack)){
+             sprintf(ack, "received %d bytes", nread);
+             if ( sendto( sfd, ack, sizeof(ack),0,(struct sockaddr *) &peer_addr,peer_addr_len) != sizeof(ack)){
                  fprintf(stderr, "Error sending response\n");
              }
         }

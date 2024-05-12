@@ -38,9 +38,12 @@ typedef struct{
     uint16_t Green;
     uint16_t Blue;
     uint16_t Light;
-    float accel_x;
-    float accel_y; 
-    float accel_z;
+    uint16_t accel_x;
+    uint16_t accel_y;
+    uint16_t accel_z;
+    float f_accel_x;
+    float f_accel_y; 
+    float f_accel_z;
 }data_received;
 
 int main(int argc, char *argv[]) {
@@ -131,8 +134,7 @@ int main(int argc, char *argv[]) {
         char msg333[] = "Hello RPI";
         char msg3333[] = "Wrong Message";
         peer_addr_len = sizeof(struct sockaddr_storage);
-        nread = recvfrom(sfd, buf, sizeof(buf), 0, (struct sockaddr *) &peer_addr, &peer_addr_len
-        );
+        nread = recvfrom(sfd, buf, sizeof(buf), 0, (struct sockaddr *) &peer_addr, &peer_addr_len);
         if (nread == -1)
                 continue;               /* Ignore failed request */
 
@@ -148,9 +150,13 @@ int main(int argc, char *argv[]) {
                 datos[i].Green = buf[i*10+1];
                 datos[i].Blue = buf[i*10+2];
                 datos[i].Light = buf[i*10+3];
-                datos[i].accel_x = (((buf[i*10+4]<<8) | buf[i*10+5])/MPU6000_SCALE_FACTOR)*9.81;
-                datos[i].accel_y = (((buf[i*10+6]<<8) | buf[i*10+7])/MPU6000_SCALE_FACTOR)*9.81;
-                datos[i].accel_z = (((buf[i*10+8]<<8) | buf[i*10+9])/MPU6000_SCALE_FACTOR)*9.81;
+                datos[i].accel_x = ((buf[i*10+4]<<8) | buf[i*10+5]);
+                datos[i].accel_y = ((buf[i*10+6]<<8) | buf[i*10+7]);
+                datos[i].accel_z = ((buf[i*10+8]<<8) | buf[i*10+9]);
+                datos[i].f_accel_x = (datos[i].accel_x/MPU6000_SCALE_FACTOR)*9.81;
+                datos[i].f_accel_y = (datos[i].accel_y/MPU6000_SCALE_FACTOR)*9.81;
+                datos[i].f_accel_z = (datos[i].accel_z/MPU6000_SCALE_FACTOR)*9.81;
+
 
 
                 if(datos[i].Red > red_max){
@@ -221,29 +227,50 @@ int main(int argc, char *argv[]) {
             blue_media = blue_media/10;
             light_media = light_media/10;
             system("clear");
-            printf("Maximo aceleracion en x: %f\n", acc_x_max);
-            printf("Minimo aceleracion en x: %f\n", acc_x_min);
-            printf("Media aceleracion en x: %f\n", acc_x_media);
-            printf("Maximo aceleracion en y: %f\n", acc_y_max);
-            printf("Minimo aceleracion en y: %f\n", acc_y_min);
-            printf("Media aceleracion en y: %f\n", acc_y_media);
-            printf("Maximo aceleracion en z: %f\n", acc_z_max);
-            printf("Minimo aceleracion en z: %f\n", acc_z_min);
-            printf("Media aceleracion en z: %f\n", acc_z_media);
-            printf("Maximo Red: %d\n", red_max);
-            printf("Minimo Red: %d\n", red_min);
-            printf("Media Red: %d\n", red_media);
-            printf("Maximo Green: %d\n", green_max);
-            printf("Minimo Green: %d\n", green_min);
-            printf("Media Green: %d\n", green_media);
-            printf("Maximo Blue: %d\n", blue_max);
-            printf("Minimo Blue: %d\n", blue_min);
-            printf("Media Blue: %d\n", blue_media);
-            printf("Maximo Light: %d\n", light_max);
-            printf("Minimo Light: %d\n", light_min);
-            printf("Media Light: %d\n", light_media);
+            printf("X axis maximum acceleration: %f\n", acc_x_max);
+            printf("X axis minimum acceleration %f\n", acc_x_min);
+            printf("X axis mean acceleration: %f\n", acc_x_media);
+            printf("Y axis maximum acceleration: %f\n", acc_y_max);
+            printf("Y axis minimum acceleration: %f\n", acc_y_min);
+            printf("Y axis mean acceleration: %f\n", acc_y_media);
+            printf("Z axis maximum acceleration: %f\n", acc_z_max);
+            printf("Z axis minimum acceleration: %f\n", acc_z_min);
+            printf("Z axis mean acceleration: %f\n", acc_z_media);
+            printf("Max Red: %d\n", red_max);
+            printf("Min Red: %d\n", red_min);
+            printf("Mean Red: %d\n", red_media);
+            printf("Max Green: %d\n", green_max);
+            printf("Min Green: %d\n", green_min);
+            printf("Mean Green: %d\n", green_media);
+            printf("Max Blue: %d\n", blue_max);
+            printf("Min Blue: %d\n", blue_min);
+            printf("Mean Blue: %d\n", blue_media);
+            printf("Max Light: %d\n", light_max);
+            printf("Min Light: %d\n", light_min);
+            printf("Mean Light: %d\n", light_media);
 
-            
+            acc_x_min = 0;
+             acc_x_max = 0;
+             acc_x_media = 0;
+             acc_y_min = 0;
+             acc_y_max = 0;
+             acc_y_media = 0;
+             acc_z_min = 0;
+             acc_z_max  = 0;
+             acc_z_media = 0;
+
+             red_min = 0;
+             red_max = 0;
+             red_media = 0;
+             green_min = 0;
+             green_max = 0;
+             green_media = 0;
+             blue_min = 0;
+             blue_max = 0;
+             blue_media = 0;
+             light_min  = 0;
+             light_max = 0;
+             light_media = 0 ;
         }
         else
             fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s));

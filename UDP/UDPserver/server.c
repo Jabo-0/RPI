@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
         char msg33[] = "Hello server";
         char msg333[] = "Hello RPI";
         char msg3333[] = "Wrong Message";
-        char ack[];
+        //char ack[];
         peer_addr_len = sizeof(struct sockaddr_storage);
         nread = recvfrom(sfd, buf, sizeof(buf), 0, (struct sockaddr *) &peer_addr, &peer_addr_len);
         if (nread == -1)
@@ -157,7 +157,6 @@ int main(int argc, char *argv[]) {
                 datos[i].f_accel_x = (datos[i].accel_x*9.81)/MPU6000_SCALE_FACTOR;
                 datos[i].f_accel_y = (datos[i].accel_y*9.81)/MPU6000_SCALE_FACTOR;
                 datos[i].f_accel_z = (datos[i].accel_z*9.81)/MPU6000_SCALE_FACTOR;
-
 
 
                 if(datos[i].Red > red_max){
@@ -260,18 +259,20 @@ int main(int argc, char *argv[]) {
              acc_z_max  = -32768;
              acc_z_media = 0;
 
-             red_min = 257;
+             red_min = 256;
              red_max = 0;
              red_media = 0;
-             green_min = 257;
+             green_min = 256;
              green_max = 0;
              green_media = 0;
-             blue_min = 257;
+             blue_min = 256;
              blue_max = 0;
              blue_media = 0;
-             light_min  = 257;
+             light_min  = 256;
              light_max = 0;
              light_media = 0 ;
+
+             /*
             fprintf(ack,"recived %d bytes", nread);
              if ( sendto( sfd, ack, strlen(ack),0,(struct sockaddr *) &peer_addr,peer_addr_len) != strlen(ack)){
                  fprintf(stderr, "Error sending response\n");
@@ -285,8 +286,8 @@ int main(int argc, char *argv[]) {
       }else{
         if (sendto( sfd, msg3333, strlen(msg3333), 0, (struct sockaddr *) &peer_addr, peer_addr_len) != nread) {
             fprintf(stderr, "Error sending response\n");
-        }
         }*/
+        }
       
     }
 }

@@ -249,26 +249,26 @@ int main(int argc, char *argv[]) {
             printf("Min Light: %d\n", light_min);
             printf("Mean Light: %d\n", light_media);
 
-            acc_x_min = 0;
+            acc_x_min = 65500;
              acc_x_max = 0;
              acc_x_media = 0;
-             acc_y_min = 0;
+             acc_y_min = 65500;
              acc_y_max = 0;
              acc_y_media = 0;
-             acc_z_min = 0;
+             acc_z_min = 65500;
              acc_z_max  = 0;
              acc_z_media = 0;
 
-             red_min = 0;
+             red_min = 65500;
              red_max = 0;
              red_media = 0;
-             green_min = 0;
+             green_min = 65500;
              green_max = 0;
              green_media = 0;
-             blue_min = 0;
+             blue_min = 65500;
              blue_max = 0;
              blue_media = 0;
-             light_min  = 0;
+             light_min  = 65500;
              light_max = 0;
              light_media = 0 ;
         }

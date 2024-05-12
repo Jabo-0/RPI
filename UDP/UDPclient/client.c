@@ -39,14 +39,14 @@ void mpu();
 #define MPU6000_I2C_ADDR 0x68
 #define MPU6000_ACCEL_XOUT_H 0x3B
 #define MPU6000_PWR_MGMT_1 0x6B
-#define MPU6000_SCALE_FACTOR 16384.0
+#define MPU6000_SCALE_FACTOR 16384
 
 int fd_mpu;
 
 typedef struct {
-	__uint16_t accel_x;
-	__uint16_t accel_y;
-	__uint16_t accel_z;
+	int16_t accel_x;
+	int16_t accel_y;
+	int16_t accel_z;
 } t_accel_data;
 
 
@@ -170,7 +170,9 @@ int main(int argc, char *argv[]) {
 
       ///*
       float accel_x_data = (mpu_udp[i].accel_x/MPU6000_SCALE_FACTOR)*9.8;
-      printf("ite: %d green:%d  red: %d ax: %.2f \n", i,tcs_udp[i].Green, tcs_udp[i].Red, accel_x_data);
+      uint16_t aux = send_data[i].data[4] << 8 | send_data[i].data[5];
+      float accel_x_data2 = (aux/MPU6000_SCALE_FACTOR)*9.8;
+      printf("ite: %d green:%d  red: %d ax: %.2f ax2: %.2f  \n", i,tcs_udp[i].Green, tcs_udp[i].Red, accel_x_data, accel_x_data2);
       fflush(stdout);
       //*/
     }
@@ -237,8 +239,6 @@ int main(int argc, char *argv[]) {
 
 }
 
-//hay que cambirle muchas cosas a esto para adaptarlo
-
 //Acelerometer
 
 void mpu(){
@@ -298,9 +298,9 @@ void mpu(){
 
     // Print the accelerometer data
     ///*
-    float accel_x_data = (mpu_udp[jota].accel_x/MPU6000_SCALE_FACTOR)*9.8;
-    float accel_y_data = (mpu_udp[jota].accel_y/MPU6000_SCALE_FACTOR)*9.8;
-    float accel_z_data = (mpu_udp[jota].accel_z/MPU6000_SCALE_FACTOR)*9.8;
+    float accel_x_data = (mpu_udp[jota].accel_x*9.8)/MPU6000_SCALE_FACTOR;
+    float accel_y_data = (mpu_udp[jota].accel_y*9.8)/MPU6000_SCALE_FACTOR;
+    float accel_z_data = (mpu_udp[jota].accel_z*9.8)/MPU6000_SCALE_FACTOR;
     printf("ite: %d x: %.2f   y: %.2f  z: %.2f \n", jota, accel_x_data, accel_y_data, accel_z_data);
     fflush(stdout);
     //*/

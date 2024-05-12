@@ -191,29 +191,29 @@ int main(int argc, char *argv[]) {
                 }
                 light_media += datos[i].Light;
 
-                if(datos[i].accel_x > acc_x_max){
-                    acc_x_max = datos[i].accel_x;
+                if(datos[i].f_accel_x > acc_x_max){
+                    acc_x_max = datos[i].f_accel_x;
                 }
-                if(datos[i].accel_x < acc_x_min){
-                    acc_x_min = datos[i].accel_x;
+                if(datos[i].f_accel_x < acc_x_min){
+                    acc_x_min = datos[i].f_accel_x;
                 }
-                acc_x_media += datos[i].accel_x;
+                acc_x_media += datos[i].f_accel_x;
 
-                if(datos[i].accel_y > acc_y_max){
-                    acc_y_max = datos[i].accel_y;
+                if(datos[i].f_accel_y > acc_y_max){
+                    acc_y_max = datos[i].f_accel_y;
                 }
-                if(datos[i].accel_y < acc_y_min){
-                    acc_y_min = datos[i].accel_y;
+                if(datos[i].f_accel_y < acc_y_min){
+                    acc_y_min = datos[i].f_accel_y;
                 }
-                acc_y_media += datos[i].accel_y;
+                acc_y_media += datos[i].f_accel_y;
 
-                if(datos[i].accel_z > acc_z_max){
+                if(datos[i].f_accel_z > acc_z_max){
                     acc_z_max = datos[i].accel_z;
                 }
-                if(datos[i].accel_z < acc_z_min){
-                    acc_z_min = datos[i].accel_z;
+                if(datos[i].f_accel_z < acc_z_min){
+                    acc_z_min = datos[i].f_accel_z;
                 }
-                acc_z_media += datos[i].accel_z;
+                acc_z_media += datos[i].f_accel_z;
 
 
 

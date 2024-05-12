@@ -17,14 +17,18 @@
 #define BUF_SIZE 500
 //#define PORT 60000
 
-pthread_t t1, t2, t3;
+int sfd , bucle;
+
+
+pthread_t t1, t2;
 
 void manejador(int sig){
 
   signal(SIGINT, SIG_DFL);
   pthread_cancel(t1);
   pthread_cancel(t2);
-  pthread_cancel(t3);
+  
+  bucle = 0;
 
 }
 
@@ -38,9 +42,9 @@ void manejador(int sig){
 int fd_mpu;
 
 typedef struct {
-	float accel_x;
-	float accel_y;
-	float accel_z;
+	__uint16_t accel_x;
+	__uint16_t accel_y;
+	__uint16_t accel_z;
 } t_accel_data;
 
 
@@ -55,67 +59,53 @@ typedef struct {
 int fd_tcs;
 
 typedef struct{
-    __uint16_t Red;
-    __uint16_t Green;
-    __uint16_t Blue;
-    __uint16_t Light;
+    __uint8_t Red;
+    __uint8_t Green;
+    __uint8_t Blue;
+    __uint8_t Light;
 }t_color_data;
+
+
+typedef struct{
+    char data[10];
+}t_send_data;
+
+
+t_accel_data mpu_udp[10];
+
+t_color_data tcs_udp[10];
+
+t_send_data send_data[10];
+
+
+void udp_client(int argc, char *argv[]);
+void mpu();
+void tcs();
 
 int main(int argc, char *argv[]) {
 
   signal(SIGINT, manejador);
+  printf("inicio program\n");
+            fflush(stdout);
 
-  t_accel_data mpu_udp[10];
 
-  t_color_data tcs_udp[10];
-
-  if(pthread_create(&t1, NULL, (void*)udp_client, NULL) != 0){
+  if(pthread_create(&t1, NULL, (void*)mpu, NULL) != 0){
     printf("Error creating thread\n");
     fflush(stdout);
     return 1;
   }
-  if(pthread_create(&t2, NULL, (void*)mpu, NULL) != 0){
-    printf("Error creating thread\n");
-    fflush(stdout);
-    return 1;
-  }
-  if(pthread_create(&t3, NULL, (void*)tcs, NULL) != 0){
+  if(pthread_create(&t2, NULL, (void*)tcs, NULL) != 0){
     printf("Error creating thread\n");
     fflush(stdout);
     return 1;
   }
 
-  if(pthread_join(t1, NULL) != 0){
-    printf("Error joining thread\n");
-    fflush(stdout);
-    return 1;
-  }
-  if(pthread_join(t2, NULL) != 0){
-    printf("Error joining thread\n");
-    fflush(stdout);
-    return 1;
-  }
-  if(pthread_join(t3, NULL) != 0){
-    printf("Error joining thread\n");
-    fflush(stdout);
-    return 1;
-  }
 
-  printf("ANCELAO \n");
-
-  close(fd_mpu);
-  close(fd_tcs);
-
-
-
-}
-
-//hay que cambirle muchas cosas a esto para adaptarlo
-
-int udp_client() {
+  printf("udp client start uwu\n");
+            fflush(stdout);
     struct addrinfo hints;
     struct addrinfo *result, *rp;
-    int sfd, s, j;
+    int s, j;
     size_t len;
     ssize_t nread;
     char buf[BUF_SIZE];
@@ -124,14 +114,23 @@ int udp_client() {
         fprintf(stderr, "Usage: %s host port msg...\n", argv[0]);
         exit(EXIT_FAILURE);
     }
+    printf("argus uwu\n");
+            fflush(stdout);
 
     /* Obtain address(es) matching host/port */
+
+      bucle = 33;
+
+  while(bucle){
 
     memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
     hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
     hints.ai_flags = 0;
     hints.ai_protocol = 0;          /* Any protocol */
+
+    printf("memo\n");
+            fflush(stdout);
 
     s = getaddrinfo(argv[1], argv[2], &hints, &result);
     if (s != 0) {
@@ -144,7 +143,10 @@ int udp_client() {
     If socket(2) (or connect(2)) fails, we (close the socket
     and) try the next address. */
 
-  while(33){
+        printf("33 33 33 33 33 33\n");
+            fflush(stdout);
+
+
 
     for (rp = result; rp != NULL; rp = rp->ai_next) {
         sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
@@ -156,6 +158,8 @@ int udp_client() {
 
         close(sfd);
     }
+    printf("EMPIEZO uwu\n");
+            fflush(stdout);
 
     if (rp == NULL) {               /* No address succeeded */
         fprintf(stderr, "Could not connect\n");
@@ -164,38 +168,93 @@ int udp_client() {
 
     freeaddrinfo(result);           /* No longer needed */
 
+    printf("EMPId owom\n");
+            fflush(stdout);
     /* Send remaining command-line arguments as separate
     datagrams, and read responses from server */
+    for(int i = 0; i < 10; i++){
 
-    for (j = 3; j < argc; j++) {
-        len = strlen(argv[j]) + 1;
-        /* +1 for terminating null byte */
+      send_data[i].data[0] = tcs_udp[i].Red;
+      send_data[i].data[1] = tcs_udp[i].Green;
+      send_data[i].data[2] = tcs_udp[i].Blue;
+      send_data[i].data[3] = tcs_udp[i].Light;
+      send_data[i].data[4] = mpu_udp[i].accel_x >> 8;
+      send_data[i].data[5] = mpu_udp[i].accel_x;
+      send_data[i].data[6] = mpu_udp[i].accel_y >> 8;
+      send_data[i].data[7] = mpu_udp[i].accel_y;
+      send_data[i].data[8] = mpu_udp[i].accel_z >> 8;
+      send_data[i].data[9] = mpu_udp[i].accel_z;
+      printf("Accelerometer data:\n ax=%d\n", tcs_udp[i].Green);
+      fflush(stdout);
+      
+    }
+    printf("EMPId awa\n");
+            fflush(stdout);
 
-        if (len + 1 > BUF_SIZE) {
-            fprintf(stderr, "Ignoring long message in argument %d\n", j);
-            continue;
-        }
+  for(int i = 0; i < 10; i++){
+    for (j = 0; j < 10; j++){
 
-        if (write(sfd, argv[j], len) != len) {
-            fprintf(stderr, "partial/failed write\n");
-            exit(EXIT_FAILURE);
-        }
-
-        nread = read(sfd, buf, BUF_SIZE);
-        if (nread == -1) {
-            perror("read");
-            exit(EXIT_FAILURE);
+        if (write(sfd, send_data[i].data[j], 8) != 8) {
+            //fprintf(stderr, "partial/failed write\n");
+            //fflush(stdout);
+            //exit(EXIT_FAILURE);
         }
     }
-        printf("Received %zd bytes: %s\n", nread, buf);
-        for(int i = 0;i < nread; i++){
-                printf("%c", buf[i]);
-                fflush(stdout);
-            }
-        printf("\n");   
+  }
+      printf("acabe envio\n");
+            fflush(stdout);
+
+        //nread = read(sfd, buf, BUF_SIZE);
+        //if (nread == -1) {
+            //perror("read");
+            //exit(EXIT_FAILURE);
+        //}
+
+    //recepcion
+
+        //printf("Received %zd bytes: %s\n", nread, buf);
+        //for(int i = 0;i < nread; i++){
+        //        printf("%c", buf[i]);
+        //        fflush(stdout);
+        //    }
+        printf("\n"); 
+        printf("Roger roger\n");
+            fflush(stdout);  
+
+
+printf("mimimimimimi\n");
+            fflush(stdout);
+    sleep(10);
+    printf("I wake up\n");
+            fflush(stdout);
+
     }
-    exit(EXIT_SUCCESS);
+    
+
+  if(pthread_join(t1, NULL) != 0){
+    printf("Error joining thread\n");
+    fflush(stdout);
+    return 1;
+  }
+  
+  if(pthread_join(t2, NULL) != 0){
+    printf("Error joining thread\n");
+    fflush(stdout);
+    return 1;
+  }
+
+  printf("ANCELAO \n");
+
+  close(fd_mpu);
+  close(fd_tcs);
+
+  exit(EXIT_SUCCESS);
+
 }
+
+//hay que cambirle muchas cosas a esto para adaptarlo
+
+
 
 
 
@@ -255,20 +314,16 @@ void mpu(){
 
     // Convert the accelerometer data
 
-    short ax = (accel_data[0] << 8) | accel_data[1];
-    short ay = (accel_data[2] << 8) | accel_data[3];
-    short az = (accel_data[4] << 8) | accel_data[5];
-
-    mpu_udp[jota].accel_x = ((ax / MPU6000_SCALE_FACTOR) * 9.8);
-    mpu_udp[jota].accel_y = ((ay / MPU6000_SCALE_FACTOR) * 9.8);
-    mpu_udp[jota].accel_z = ((az / MPU6000_SCALE_FACTOR) * 9.8)-2.4;
-
-
+    mpu_udp[jota].accel_x = (accel_data[0] << 8) | accel_data[1];
+    mpu_udp[jota].accel_y = (accel_data[2] << 8) | accel_data[3];
+    mpu_udp[jota].accel_z = (accel_data[4] << 8) | accel_data[5];
 
     // Print the accelerometer data
+    /*
     system("clear");
     printf("Accelerometer data:\n ax=%.2f m/s², ay=%.2f m/s², 
       az=%.2f m/s² \n", mpu_udp[jota].accel_x, mpu_udp[jota].accel_y, mpu_udp[jota].accel_z);
+    */
     if((mpu_udp[jota].accel_x && mpu_udp[jota].accel_y) == 0){
       printf("Sensor disconnected");
 
@@ -283,15 +338,12 @@ void mpu(){
       packets.nmsgs = 1;
 
       ioctl(fd_mpu, I2C_RDWR, &packets);
-      
-      
+
+      }
+            
       if(jota < 10)
         jota++;
       else jota = 0;
-
-
-      
-      }
     // Sleep for 3 seconds
     sleep(1);
   }
@@ -307,6 +359,8 @@ void tcs(){
   char i2cFile[15];
   int device = 1;
   int addr = TCS34725_I2C_ADDR;
+
+  uint8_t ca;
 
   printf("Hello and welcome to the color sensor program\n");
   fflush(stdout);
@@ -373,23 +427,27 @@ void tcs(){
 
     // Convert the color data
 
-    t_color_data color_data;
+    tcs_udp[ca].Light = ((raw_color_data[0] << 8) | raw_color_data[1])/256;
+    tcs_udp[ca].Red = ((raw_color_data[2] << 8) | raw_color_data[3])/256;
+    tcs_udp[ca].Green = ((raw_color_data[4] << 8) | raw_color_data[5])/256;
+    tcs_udp[ca].Blue = ((raw_color_data[6] << 8) | raw_color_data[7])/256;
 
-    color_data.Light = ((color_data[0] << 8) | color_data[1])/256;
-    color_data.Red = ((color_data[2] << 8) | color_data[3])/256;
-    color_data.Green = ((color_data[4] << 8) | color_data[5])/256;
-    color_data.Blue = ((color_data[6] << 8) | color_data[7])/256;
+    u_int8_t x = ((raw_color_data[0] << 8) | raw_color_data[1])/256;
 
     
+    if(ca < 10)
+        ca++;
+      else ca = 0;
 
-
-
+    sleep(1);
 
     // Print the color data
-
-    system("clear");
-    printf("Light intensity: %d   Red: %d   Green: %d   Blue: %d\n", color_data.Light, color_data.Red, color_data.Green, color_data.Blue);
+    
+    //system("clear");
+    printf("Light intensity: %d   Red: %d   Green: %d   Blue: %d   x: %d\n", tcs_udp[ca].Light, tcs_udp[ca].Red, tcs_udp[ca].Green, tcs_udp[ca].Blue, x);
     printf("Color: ");
+    fflush(stdout);
+    /*
     if(color_data.Red > 200 && color_data.Green > 200 && color_data.Blue > 200){
       printf("White\n");
     }else if(color_data.Red < 50 && color_data.Green < 50 && color_data.Blue < 50){
@@ -410,8 +468,7 @@ void tcs(){
       printf("Gray\n");
     }
     fflush(stdout);
-
-    sleep(1);
+    */
   }
 }
 

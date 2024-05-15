@@ -10,9 +10,10 @@
 
 #define BUF_SIZE 500
 #define MPU6000_SCALE_FACTOR 16384
+
+#define TIME_MEASURE_10S 3
+#define TIME_MEASURE_S TIME_MEASURE_10S*10
 //#define PORT 60000
-
-
 
 typedef struct {
 	float accel_x;
@@ -64,32 +65,32 @@ int main(int argc, char *argv[]) {
     struct sockaddr_storage peer_addr;
     socklen_t peer_addr_len;
     ssize_t nread;
-    uint8_t buf[600];
-    data_received datos[60] = {0};
-    int six_meas = 0;
+    uint8_t buf[100];
+    data_received datos[TIME_MEASURE_S];
+    int six_meas = 1;
 
-    float acc_x_min;
-    float acc_x_max;
-    float acc_x_media;
-    float acc_y_min;
-    float acc_y_max;
-    float acc_y_media;
-    float acc_z_min;
-    float acc_z_max;
-    float acc_z_media;
+    float acc_x_min = 32767;
+    float acc_x_max = -32768;
+    float acc_x_media = 0;
+    float acc_y_min = 32767;
+    float acc_y_max = -32768;
+    float acc_y_media = 0;
+    float acc_z_min = 32767;
+    float acc_z_max  = -32768;
+    float acc_z_media = 0;
 
-    uint16_t red_min;
-    uint16_t red_max;
-    uint16_t red_media;
-    uint16_t green_min;
-    uint16_t green_max;
-    uint16_t green_media;
-    uint16_t blue_min;
-    uint16_t blue_max;
-    uint16_t blue_media;
-    uint16_t light_min;
-    uint16_t light_max;
-    uint16_t light_media;
+    uint16_t red_min = 256;
+    uint16_t red_max = 0;
+    uint16_t red_media = 0;
+    uint16_t green_min = 256;
+    uint16_t green_max = 0;
+    uint16_t green_media = 0;
+    uint16_t blue_min = 256;
+    uint16_t blue_max = 0;
+    uint16_t blue_media = 0;
+    uint16_t light_min  = 256;
+    uint16_t light_max = 0;
+    uint16_t light_media = 0;
     char c_nread;
 
     signal(SIGINT, handler);
@@ -149,33 +150,32 @@ int main(int argc, char *argv[]) {
         if (nread == -1)
                 continue;               /* Ignore failed request */
 
+        if ( sendto( sfd, &nread, 1,0,(struct sockaddr *) &peer_addr,peer_addr_len) != 1)
+                 fprintf(stderr, "Error sending response\n");
+            
         char host[NI_MAXHOST], service[NI_MAXSERV];
 
         s = getnameinfo((struct sockaddr *) &peer_addr, peer_addr_len, host, NI_MAXHOST, service, NI_MAXSERV, NI_NUMERICSERV );
         if (s == 0){
-            if ( sendto( sfd, &nread, 1,0,(struct sockaddr *) &peer_addr,peer_addr_len) != 1){
-                 fprintf(stderr, "Error sending response\n");
-             }else
-            fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s));
 
-             six_meas=(six_meas<6?six_meas+1:1);
-                for(int i = 0; i < 10; i++){
+            for(int i = 0; i < 10; i++){
                 datos[i*six_meas].Red = buf[i*10];
                 datos[i*six_meas].Green = buf[i*10+1];
                 datos[i*six_meas].Blue = buf[i*10+2];
                 datos[i*six_meas].Light = buf[i*10+3];
-                datos[i*six_meas].accel_x = ((buf[i*10+4]<<8) | buf[i*10+5]);
-                datos[i*six_meas].accel_y = ((buf[i*10+6]<<8) | buf[i*10+7]);
-                datos[i*six_meas].accel_z = ((buf[i*10+8]<<8) | buf[i*10+9]);
-                datos[i*six_meas].f_accel_x = (datos[i].accel_x*9.81)/MPU6000_SCALE_FACTOR;
-                datos[i*six_meas].f_accel_y = (datos[i].accel_y*9.81)/MPU6000_SCALE_FACTOR;
-                datos[i*six_meas].f_accel_z = (datos[i].accel_z*9.81)/MPU6000_SCALE_FACTOR;
-                }
+                datos[i*six_meas].accel_x = ((buf[i*10+4] << 8) | buf[i*10+5]);
+                datos[i*six_meas].accel_y = ((buf[i*10+6] << 8) | buf[i*10+7]);
+                datos[i*six_meas].accel_z = ((buf[i*10+8] << 8) | buf[i*10+9]);
+                datos[i*six_meas].f_accel_x = (datos[i*six_meas].accel_x*9.81)/MPU6000_SCALE_FACTOR;
+                datos[i*six_meas].f_accel_y = (datos[i*six_meas].accel_y*9.81)/MPU6000_SCALE_FACTOR;
+                datos[i*six_meas].f_accel_z = (datos[i*six_meas].accel_z*9.81)/MPU6000_SCALE_FACTOR;
+            }
+            six_meas = (six_meas < TIME_MEASURE_10S ? six_meas + 1 : 1);
              
             //printf("Received %zd bytes from %s:%s\n", nread, host, service);
-            if (six_meas==6){
+            if (six_meas == TIME_MEASURE_10S){
 
-            for(int i = 0;i < 60; i++){
+            for(int i = 0; i < TIME_MEASURE_S; i++){
 
                 //aqui hay que hacer los calculos chungos de cada medida
 
@@ -235,18 +235,15 @@ int main(int argc, char *argv[]) {
                     acc_z_min = datos[i].f_accel_z;
                 }
                 acc_z_media += datos[i].f_accel_z;
-
-
-
             }
 
-            acc_x_media = acc_x_media/10;
-            acc_y_media = acc_y_media/10;
-            acc_z_media = acc_z_media/10;
-            red_media = red_media/10;
-            green_media = green_media/10;
-            blue_media = blue_media/10;
-            light_media = light_media/10;
+            acc_x_media = acc_x_media/(TIME_MEASURE_S);
+            acc_y_media = acc_y_media/(TIME_MEASURE_S);
+            acc_z_media = acc_z_media/(TIME_MEASURE_S);
+            red_media = red_media/(TIME_MEASURE_S);
+            green_media = green_media/(TIME_MEASURE_S);
+            blue_media = blue_media/(TIME_MEASURE_S);
+            light_media = light_media/(TIME_MEASURE_S);
             system("clear");
             printf("X axis maximum acceleration: %f\n", acc_x_max);
             printf("X axis minimum acceleration %f\n", acc_x_min);
@@ -291,19 +288,10 @@ int main(int argc, char *argv[]) {
              blue_media = 0;
              light_min  = 256;
              light_max = 0;
-             light_media = 0 ;
-             //sprintf(ack, "received %zd bytes", nread);
-
+             light_media = 0;
         }
-        
-        /*if(strcmp(buf, msg33) == 0){
-            
-        }
-      }else{
-        if (sendto( sfd, msg3333, strlen(msg3333), 0, (struct sockaddr *) &peer_addr, peer_addr_len) != nread) {
-            fprintf(stderr, "Error sending response\n");
-        }*/
-    }
+    }else
+        fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s));
       
     }
 

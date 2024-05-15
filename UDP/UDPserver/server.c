@@ -36,13 +36,15 @@ typedef struct{
 
 u_int8_t measu = 33;
 
-void handler(int sig){
+void handler(int sig){   // When control + C is used the program close itself closing all file descriptors (in the end of the program)
 
   signal(SIGINT, SIG_DFL);
   
   measu = 0;
 
 }
+
+//the argument needed is the port used
 
 int main(int argc, char *argv[]) {
     struct addrinfo hints;
@@ -55,6 +57,8 @@ int main(int argc, char *argv[]) {
     data_received datos[TIME_MEASURE_S];
     int six_meas = 1;
 
+    //inicialitation of data
+	
     float acc_x_min = 32767;
     float acc_x_max = -32768;
     float acc_x_media = 0;
@@ -83,7 +87,9 @@ int main(int argc, char *argv[]) {
 
     //char buf[BUF_SIZE];
 
-    if (argc != 2) {
+
+	
+    if (argc != 2) { //if not enough arguments the program ends
       fprintf(stderr, "Usage: %s port\n", argv[0]);
       exit(EXIT_FAILURE);
     }
@@ -128,22 +134,22 @@ int main(int argc, char *argv[]) {
 
     /* Read datagrams and echo them back to sender */
 
+	//infinite loop
     while (measu) {
 
-        char ack[50] ;
         peer_addr_len = sizeof(struct sockaddr_storage);
-        nread = recvfrom(sfd, buf, sizeof(buf), 0, (struct sockaddr *) &peer_addr, &peer_addr_len);
+        nread = recvfrom(sfd, buf, sizeof(buf), 0, (struct sockaddr *) &peer_addr, &peer_addr_len);  //reads data received
         if (nread == -1)
                 continue;               /* Ignore failed request */
 
-        if ( sendto( sfd, &nread, 1,0,(struct sockaddr *) &peer_addr,peer_addr_len) != 1)
+        if ( sendto( sfd, &nread, 1,0,(struct sockaddr *) &peer_addr,peer_addr_len) != 1)   //sends ACK, the data is the number of bytes received
                  fprintf(stderr, "Error sending response\n");
             
         char host[NI_MAXHOST], service[NI_MAXSERV];
 
         s = getnameinfo((struct sockaddr *) &peer_addr, peer_addr_len, host, NI_MAXHOST, service, NI_MAXSERV, NI_NUMERICSERV );
         if (s == 0){
-
+		//data interpretation, and save the diferent measures for the calculation
             for(int i = 0; i < 10; i++){
                 datos[i + (six_meas - 1)*10].Red = buf[i*10];
                 datos[i + (six_meas - 1)*10].Green = buf[i*10+1];
@@ -156,13 +162,9 @@ int main(int argc, char *argv[]) {
                 datos[i + (six_meas - 1)*10].f_accel_y = (datos[i + (six_meas - 1)*10].accel_y*9.81)/MPU6000_SCALE_FACTOR;
                 datos[i + (six_meas - 1)*10].f_accel_z = (datos[i + (six_meas - 1)*10].accel_z*9.81)/MPU6000_SCALE_FACTOR;
             }
-            
-            //printf("Received %zd bytes from %s:%s\n", nread, host, service);
             if (six_meas == TIME_MEASURE_10S){
 
             for(int i = 0; i < (TIME_MEASURE_S); i++){
-
-                //aqui hay que hacer los calculos chungos de cada medida
 
                 if(datos[i].Red > red_max){
                     red_max = datos[i].Red;
@@ -251,6 +253,8 @@ int main(int argc, char *argv[]) {
             printf("Min Light: %d\n", light_min);
             printf("Mean Light: %d\n", light_media);
 
+
+		//reset of the initial values of the data
              acc_x_min = 32767;
              acc_x_max = -32768;
              acc_x_media = 0;
@@ -282,6 +286,6 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s));
       
     }
-
+//when code reach this part is because we want to close it, we close the file descriptor
     close(sfd);
 }

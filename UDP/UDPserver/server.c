@@ -6,6 +6,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <signal.h>
 
 #define BUF_SIZE 500
 #define MPU6000_SCALE_FACTOR 16384
@@ -46,6 +47,16 @@ typedef struct{
     float f_accel_z;
 }data_received;
 
+u_int8_t measu = 33;
+
+void handler(int sig){
+
+  signal(SIGINT, SIG_DFL);
+  
+  measu = 0;
+
+}
+
 int main(int argc, char *argv[]) {
     struct addrinfo hints;
     struct addrinfo *result, *rp;
@@ -81,9 +92,9 @@ int main(int argc, char *argv[]) {
     uint16_t light_media;
     char c_nread;
 
-    //char buf[BUF_SIZE];
-    
+    signal(SIGINT, handler);
 
+    //char buf[BUF_SIZE];
 
     if (argc != 2) {
       fprintf(stderr, "Usage: %s port\n", argv[0]);
@@ -130,10 +141,8 @@ int main(int argc, char *argv[]) {
 
     /* Read datagrams and echo them back to sender */
 
-    for (;;) {
-        char msg33[] = "Hello server";
-        char msg333[] = "Hello RPI";
-        char msg3333[] = "Wrong Message";
+    while (measu) {
+
         char ack[50] ;
         peer_addr_len = sizeof(struct sockaddr_storage);
         nread = recvfrom(sfd, buf, sizeof(buf), 0, (struct sockaddr *) &peer_addr, &peer_addr_len);
@@ -146,7 +155,8 @@ int main(int argc, char *argv[]) {
         if (s == 0){
             if ( sendto( sfd, &nread, sizeof(ack),1,(struct sockaddr *) &peer_addr,peer_addr_len) != sizeof(ack)){
                  fprintf(stderr, "Error sending response\n");
-             }
+             }else
+            fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s));
 
              six_meas=(six_meas<5?six_meas+1:0);
             //printf("Received %zd bytes from %s:%s\n", nread, host, service);
@@ -281,8 +291,7 @@ int main(int argc, char *argv[]) {
              //sprintf(ack, "received %zd bytes", nread);
 
         }
-        else
-            fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s));
+        
         /*if(strcmp(buf, msg33) == 0){
             
         }
@@ -294,5 +303,5 @@ int main(int argc, char *argv[]) {
       
     }
 
-
+    close(sfd);
 }

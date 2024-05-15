@@ -13,7 +13,7 @@
 #include <pthread.h>
 #include <signal.h>
 
-#define MEAS_US 1000000   //1000000 Cada 10 segundos manda 10 medidas
+#define MEAS_US 1000000   //1000000 every 10 seconds 10 measures are send 
 #define MEAS (MEAS_US*10)
 #define BUF_SIZE 500
 //#define PORT 60000
@@ -23,7 +23,7 @@ int bucle = 33;
 
 pthread_t t1, t2;
 
-void handler(int sig){
+void handler(int sig){    // When control + C is used the program close itself closing all file descriptors (in the end of the program)
 
   signal(SIGINT, SIG_DFL);
   pthread_cancel(t1);
@@ -83,6 +83,8 @@ t_color_data tcs_udp[10];
 
 t_send_data send_data[10];
 
+//the arguments needed are the ip of the server and the port used
+
 int main(int argc, char *argv[]) {
 
   struct addrinfo hints;
@@ -100,7 +102,7 @@ int main(int argc, char *argv[]) {
   printf("Client start\n");
   fflush(stdout);
 
-  if(pthread_create(&t1, NULL, (void*)mpu, NULL) != 0){
+  if(pthread_create(&t1, NULL, (void*)mpu, NULL) != 0){     //threads for the color and the acelerometer
     printf("Error creating thread\n");
     fflush(stdout);
     return 1;
@@ -112,8 +114,8 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  if (argc < 3) {
-      fprintf(stderr, "Usage: %s host port msg...\n", argv[0]);
+  if (argc < 3) {  //if not enough arguments the program ends 
+      fprintf(stderr, "Usage: %s host port msg...\n", argv[0]); 
       exit(EXIT_FAILURE);
   }
 
@@ -162,11 +164,11 @@ int main(int argc, char *argv[]) {
 
     while(bucle){
 
-    usleep(MEAS);
+    usleep(MEAS); //waits the time of 10 measures
 
     system("clear");
 
-    for(int i = 0; i < 10; i++){
+    for(int i = 0; i < 10; i++){  // organice the information for the transmission
 
       send_data[i].data[0] = tcs_udp[i].Red;
       send_data[i].data[1] = tcs_udp[i].Green;
@@ -179,7 +181,7 @@ int main(int argc, char *argv[]) {
       send_data[i].data[8] = mpu_udp[i].accel_z >> 8;
       send_data[i].data[9] = mpu_udp[i].accel_z;
 
-      /*
+      /*//code used to know if data is send properly
       float accel_x_data = (mpu_udp[i].accel_x/MPU6000_SCALE_FACTOR)*9.8;
       uint16_t aux = send_data[i].data[4] << 8 | send_data[i].data[5];
       float accel_x_data2 = (aux/MPU6000_SCALE_FACTOR)*9.8;
@@ -189,7 +191,7 @@ int main(int argc, char *argv[]) {
     }
 
     x = 0;
-
+    //data unification to be sent
     for(int i = 0; i < 10; i++){
       for(int j = 0; j < 10; j++){
         bufOut[x] = send_data[i].data[j];
@@ -197,12 +199,11 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    x = write(sfd, bufOut, 100);
+    x = write(sfd, bufOut, 100);  //transmission
 
     if (x != 100) {
           fprintf(stderr, "partial/failed write\n");
           fflush(stdout);
-          //exit(EXIT_FAILURE);
     }
 
     printf("Send %d bytes\n", x);
@@ -210,31 +211,25 @@ int main(int argc, char *argv[]) {
 
     buf[0] = 0;
 
-    nread = read(sfd, buf, BUF_SIZE);
+    nread = read(sfd, buf, BUF_SIZE); //read of the ACK, if the data receive matches the number of bytes send the transmision is considered a success
     if (nread == -1) {
       printf("Transmission failed\n");
       fflush(stdout); 
-            //perror("read");
-            //exit(EXIT_FAILURE);
-        //}
     }else{
-
-    //recepcion
-
       printf("Received %zd bytes\n", nread);
       fflush(stdout);
       nread = 0;
-      if(buf[0] == x){
+     if(buf[0] == x){
           printf("Transmission correct\n");
           fflush(stdout);
       }else{
           printf("Transmission incomplete\n");
           fflush(stdout); 
-
       }
     }
     }
-    
+
+	//when code reach this part is because we want to close it, we wait to threads to be finish and close the file descriptors
 
   if(pthread_join(t1, NULL) != 0){
     printf("Error joining thread\n");
@@ -317,7 +312,7 @@ void mpu(){
     mpu_udp[jota].accel_z = (accel_data[4] << 8) | accel_data[5];
 
     // Print the accelerometer data
-    /*
+    /*//code used to know if data is send properly
     float accel_x_data = (mpu_udp[jota].accel_x*9.8)/MPU6000_SCALE_FACTOR;
     float accel_y_data = (mpu_udp[jota].accel_y*9.8)/MPU6000_SCALE_FACTOR;
     float accel_z_data = (mpu_udp[jota].accel_z*9.8)/MPU6000_SCALE_FACTOR;
@@ -341,7 +336,7 @@ void mpu(){
 
       }
             
-      if(jota < 9)
+      if(jota < 9) //iterator for the array in which we save the data of ten different measures
         jota++;
       else jota = 0;
     // Sleep for 1 seconds
@@ -430,12 +425,12 @@ void tcs(){
     tcs_udp[ca].Green = ((raw_color_data[4] << 8) | raw_color_data[5])/256;
     tcs_udp[ca].Blue = ((raw_color_data[6] << 8) | raw_color_data[7])/256;
 
-    /*
+    /*//code used to know if data is send properly
     printf("Light intensity: %d   Red: %d   Green: %d   Blue: %d   ite: %d\n", tcs_udp[ca].Light, tcs_udp[ca].Red, tcs_udp[ca].Green, tcs_udp[ca].Blue, ca);    
     fflush(stdout);
     //*/
     
-    if(ca < 9)
+    if(ca < 9) //iterator for the array in which we save the data of ten different measures
         ca++;
       else ca = 0;
 

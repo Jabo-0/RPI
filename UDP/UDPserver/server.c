@@ -53,8 +53,9 @@ int main(int argc, char *argv[]) {
     struct sockaddr_storage peer_addr;
     socklen_t peer_addr_len;
     ssize_t nread;
-    uint8_t buf[100];
-    data_received datos[10] = {0};
+    uint8_t buf[600];
+    data_received datos[60] = {0};
+    int six_meas = 0;
 
     float acc_x_min;
     float acc_x_max;
@@ -143,8 +144,13 @@ int main(int argc, char *argv[]) {
 
         s = getnameinfo((struct sockaddr *) &peer_addr, peer_addr_len, host, NI_MAXHOST, service, NI_MAXSERV, NI_NUMERICSERV );
         if (s == 0){
+            if ( sendto( sfd, ack, sizeof(ack),0,(struct sockaddr *) &peer_addr,peer_addr_len) != sizeof(ack)){
+                 fprintf(stderr, "Error sending response\n");
+             }
+             six_meas=(six_meas<5?six_meas+1:0);
             //printf("Received %zd bytes from %s:%s\n", nread, host, service);
-            for(int i = 0;i < 10; i++){
+            if (six_meas==5){
+            for(int i = 0;i < 60; i++){
 
                 //aqui hay que hacer los calculos chungos de cada medida
                 datos[i].Red = buf[i*10];
@@ -288,7 +294,7 @@ int main(int argc, char *argv[]) {
         }*/
     }
       
-}
+    }
 
 
 

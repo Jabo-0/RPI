@@ -1,4 +1,4 @@
-/* client.c */
+/* UDP code is from https://gist.github.com/saxbophone/f770e86ceff9d488396c0c32d47b757e */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>

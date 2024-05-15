@@ -144,9 +144,10 @@ int main(int argc, char *argv[]) {
 
         s = getnameinfo((struct sockaddr *) &peer_addr, peer_addr_len, host, NI_MAXHOST, service, NI_MAXSERV, NI_NUMERICSERV );
         if (s == 0){
-            if ( sendto( sfd, ack, sizeof(ack),0,(struct sockaddr *) &peer_addr,peer_addr_len) != sizeof(ack)){
+            if ( sendto( sfd, &nread, sizeof(ack),1,(struct sockaddr *) &peer_addr,peer_addr_len) != sizeof(ack)){
                  fprintf(stderr, "Error sending response\n");
              }
+
              six_meas=(six_meas<5?six_meas+1:0);
             //printf("Received %zd bytes from %s:%s\n", nread, host, service);
             if (six_meas==5){
@@ -278,10 +279,7 @@ int main(int argc, char *argv[]) {
              light_max = 0;
              light_media = 0 ;
              //sprintf(ack, "received %zd bytes", nread);
-            if (sendto( sfd, &nread, 1,0,(struct sockaddr *) 
-                &peer_addr,peer_addr_len) != 1){
-                 fprintf(stderr, "Error sending response\n");
-             }
+
         }
         else
             fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s));
@@ -297,4 +295,4 @@ int main(int argc, char *argv[]) {
     }
 
 
-
+}

@@ -158,22 +158,26 @@ int main(int argc, char *argv[]) {
              }else
             fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s));
 
-             six_meas=(six_meas<5?six_meas+1:0);
+             six_meas=(six_meas<6?six_meas+1:1);
+                for(int i = 0; i < 10; i++){
+                datos[i*six_meas].Red = buf[i*10];
+                datos[i*six_meas].Green = buf[i*10+1];
+                datos[i*six_meas].Blue = buf[i*10+2];
+                datos[i*six_meas].Light = buf[i*10+3];
+                datos[i*six_meas].accel_x = ((buf[i*10+4]<<8) | buf[i*10+5]);
+                datos[i*six_meas].accel_y = ((buf[i*10+6]<<8) | buf[i*10+7]);
+                datos[i*six_meas].accel_z = ((buf[i*10+8]<<8) | buf[i*10+9]);
+                datos[i*six_meas].f_accel_x = (datos[i].accel_x*9.81)/MPU6000_SCALE_FACTOR;
+                datos[i*six_meas].f_accel_y = (datos[i].accel_y*9.81)/MPU6000_SCALE_FACTOR;
+                datos[i*six_meas].f_accel_z = (datos[i].accel_z*9.81)/MPU6000_SCALE_FACTOR;
+                }
+             
             //printf("Received %zd bytes from %s:%s\n", nread, host, service);
-            if (six_meas==5){
+            if (six_meas==6){
+
             for(int i = 0;i < 60; i++){
 
                 //aqui hay que hacer los calculos chungos de cada medida
-                datos[i].Red = buf[i*10];
-                datos[i].Green = buf[i*10+1];
-                datos[i].Blue = buf[i*10+2];
-                datos[i].Light = buf[i*10+3];
-                datos[i].accel_x = ((buf[i*10+4]<<8) | buf[i*10+5]);
-                datos[i].accel_y = ((buf[i*10+6]<<8) | buf[i*10+7]);
-                datos[i].accel_z = ((buf[i*10+8]<<8) | buf[i*10+9]);
-                datos[i].f_accel_x = (datos[i].accel_x*9.81)/MPU6000_SCALE_FACTOR;
-                datos[i].f_accel_y = (datos[i].accel_y*9.81)/MPU6000_SCALE_FACTOR;
-                datos[i].f_accel_z = (datos[i].accel_z*9.81)/MPU6000_SCALE_FACTOR;
 
 
                 if(datos[i].Red > red_max){

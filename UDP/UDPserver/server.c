@@ -11,8 +11,8 @@
 #define BUF_SIZE 500
 #define MPU6000_SCALE_FACTOR 16384
 
-#define TIME_MEASURE_10S 3
-#define TIME_MEASURE_S TIME_MEASURE_10S*10
+#define TIME_MEASURE_10S 2
+#define TIME_MEASURE_S (TIME_MEASURE_10S*10)
 //#define PORT 60000
 
 typedef struct {
@@ -20,20 +20,6 @@ typedef struct {
 	float accel_y;
 	float accel_z;
 } t_accel_data;
-/*
-typedef struct{
-    __uint16_t Red;
-    __uint16_t Green;
-    __uint16_t Blue;
-    __uint16_t Light;
-}t_color_data;
-
-
-typedef struct{
-    t_accel_data[10] accel_data;
-    t_color_data[10] color_data;
-}t_send_data;
-*/
 
 typedef struct{
     uint8_t Red;
@@ -159,26 +145,24 @@ int main(int argc, char *argv[]) {
         if (s == 0){
 
             for(int i = 0; i < 10; i++){
-                datos[i*six_meas].Red = buf[i*10];
-                datos[i*six_meas].Green = buf[i*10+1];
-                datos[i*six_meas].Blue = buf[i*10+2];
-                datos[i*six_meas].Light = buf[i*10+3];
-                datos[i*six_meas].accel_x = ((buf[i*10+4] << 8) | buf[i*10+5]);
-                datos[i*six_meas].accel_y = ((buf[i*10+6] << 8) | buf[i*10+7]);
-                datos[i*six_meas].accel_z = ((buf[i*10+8] << 8) | buf[i*10+9]);
-                datos[i*six_meas].f_accel_x = (datos[i*six_meas].accel_x*9.81)/MPU6000_SCALE_FACTOR;
-                datos[i*six_meas].f_accel_y = (datos[i*six_meas].accel_y*9.81)/MPU6000_SCALE_FACTOR;
-                datos[i*six_meas].f_accel_z = (datos[i*six_meas].accel_z*9.81)/MPU6000_SCALE_FACTOR;
+                datos[i + (six_meas - 1)*10].Red = buf[i*10];
+                datos[i + (six_meas - 1)*10].Green = buf[i*10+1];
+                datos[i + (six_meas - 1)*10].Blue = buf[i*10+2];
+                datos[i + (six_meas - 1)*10].Light = buf[i*10+3];
+                datos[i + (six_meas - 1)*10].accel_x = ((buf[i*10+4] << 8) | buf[i*10+5]);
+                datos[i + (six_meas - 1)*10].accel_y = ((buf[i*10+6] << 8) | buf[i*10+7]);
+                datos[i + (six_meas - 1)*10].accel_z = ((buf[i*10+8] << 8) | buf[i*10+9]);
+                datos[i + (six_meas - 1)*10].f_accel_x = (datos[i + (six_meas - 1)*10].accel_x*9.81)/MPU6000_SCALE_FACTOR;
+                datos[i + (six_meas - 1)*10].f_accel_y = (datos[i + (six_meas - 1)*10].accel_y*9.81)/MPU6000_SCALE_FACTOR;
+                datos[i + (six_meas - 1)*10].f_accel_z = (datos[i + (six_meas - 1)*10].accel_z*9.81)/MPU6000_SCALE_FACTOR;
             }
-            six_meas = (six_meas < TIME_MEASURE_10S ? six_meas + 1 : 1);
-             
+            
             //printf("Received %zd bytes from %s:%s\n", nread, host, service);
             if (six_meas == TIME_MEASURE_10S){
 
-            for(int i = 0; i < TIME_MEASURE_S; i++){
+            for(int i = 0; i < (TIME_MEASURE_S); i++){
 
                 //aqui hay que hacer los calculos chungos de cada medida
-
 
                 if(datos[i].Red > red_max){
                     red_max = datos[i].Red;
@@ -290,6 +274,10 @@ int main(int argc, char *argv[]) {
              light_max = 0;
              light_media = 0;
         }
+        if(six_meas == TIME_MEASURE_10S){
+            six_meas = 1;
+        }else six_meas++;
+        
     }else
         fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s));
       

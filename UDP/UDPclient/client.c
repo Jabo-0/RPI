@@ -13,7 +13,8 @@
 #include <pthread.h>
 #include <signal.h>
 
-
+#define MEAS_US 1000000   //1000000 Cada 10 segundos manda 10 medidas
+#define MEAS (MEAS_US*10)
 #define BUF_SIZE 500
 //#define PORT 60000
 
@@ -94,6 +95,8 @@ int main(int argc, char *argv[]) {
 
   signal(SIGINT, handler);
 
+  system("clear");
+
   printf("Client start\n");
   fflush(stdout);
 
@@ -154,10 +157,14 @@ int main(int argc, char *argv[]) {
     /* Send remaining command-line arguments as separate
     datagrams, and read responses from server */
     sleep(1);
+    
+    system("clear");
 
     while(bucle){
 
-      system("clear");
+    usleep(MEAS);
+
+    system("clear");
 
     for(int i = 0; i < 10; i++){
 
@@ -226,7 +233,6 @@ int main(int argc, char *argv[]) {
 
       }
     }
-    sleep(10);
     }
     
 
@@ -339,7 +345,7 @@ void mpu(){
         jota++;
       else jota = 0;
     // Sleep for 1 seconds
-    sleep(1);
+    usleep(MEAS_US);
   }
 }
 
@@ -433,7 +439,7 @@ void tcs(){
         ca++;
       else ca = 0;
 
-    sleep(1);
+    usleep(MEAS_US);
 
   }
 }

@@ -114,8 +114,6 @@ int main(int argc, char *argv[]) {
       exit(EXIT_FAILURE);
   }
 
-  while(bucle){
-
     /* Obtain address(es) matching host/port */
 
     memset(&hints, 0, sizeof(struct addrinfo));
@@ -155,6 +153,12 @@ int main(int argc, char *argv[]) {
 
     /* Send remaining command-line arguments as separate
     datagrams, and read responses from server */
+    sleep(1);
+
+    while(bucle){
+
+      system("clear");
+
     for(int i = 0; i < 10; i++){
 
       send_data[i].data[0] = tcs_udp[i].Red;
@@ -212,7 +216,7 @@ int main(int argc, char *argv[]) {
 
       printf("Received %zd bytes\n", nread);
       fflush(stdout);
-
+      nread = 0;
       if(buf[0] == x){
           printf("Transmission correct\n");
           fflush(stdout);
@@ -240,6 +244,8 @@ int main(int argc, char *argv[]) {
 
   printf("\n Program terminated.\n");
 
+
+  close(sfd);
   close(fd_mpu);
   close(fd_tcs);
 

@@ -277,8 +277,11 @@ int main(int argc, char *argv[]) {
              light_min  = 256;
              light_max = 0;
              light_media = 0 ;
-             sprintf(ack, "received %d bytes", nread);
-            }
+             //sprintf(ack, "received %zd bytes", nread);
+            if (sendto( sfd, &nread, 1,0,(struct sockaddr *) 
+                &peer_addr,peer_addr_len) != 1){
+                 fprintf(stderr, "Error sending response\n");
+             }
         }
         else
             fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s));
@@ -289,7 +292,7 @@ int main(int argc, char *argv[]) {
         if (sendto( sfd, msg3333, strlen(msg3333), 0, (struct sockaddr *) &peer_addr, peer_addr_len) != nread) {
             fprintf(stderr, "Error sending response\n");
         }*/
-        }
+    }
       
     }
 

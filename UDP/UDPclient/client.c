@@ -59,7 +59,7 @@ void tcs();
 #define TCS34725_ENABLE_REG 0x03
 #define TCS34725_CMD_REG 0x80
 #define TCS34725_CMD_REG_RD 0xA0
-#define TCS34725_COLOR_OUT 0x14
+#define TCS34725_COLOR_OUT 0x13
 
 int fd_tcs;
 
@@ -384,7 +384,7 @@ void tcs(){
   }
 
   char reg = TCS34725_CMD_REG_RD + TCS34725_COLOR_OUT;
-  char raw_color_data[8];
+  char raw_color_data[9];
 
   while(33){
     // Read color sensor data
@@ -402,6 +402,7 @@ void tcs(){
     packets.msgs = messages;
     packets.nmsgs = 2;
 
+  do{
     if(!ioctl(fd_tcs, I2C_RDWR, &packets)){
       printf("Error in I2C\n");
       messages[0].addr = addr;
@@ -417,13 +418,18 @@ void tcs(){
         fflush(stdout);
       }
     }
+    /*//code used to know the status
+    printf("Status: %d \n", raw_color_data[0]);    
+    fflush(stdout);
+    //*/
+  }while((raw_color_data[0] & 0x01) == 0);
 
     // Convert the color data
 
-    tcs_udp[ca].Light = ((raw_color_data[0] << 8) | raw_color_data[1])/256;
-    tcs_udp[ca].Red = ((raw_color_data[2] << 8) | raw_color_data[3])/256;
-    tcs_udp[ca].Green = ((raw_color_data[4] << 8) | raw_color_data[5])/256;
-    tcs_udp[ca].Blue = ((raw_color_data[6] << 8) | raw_color_data[7])/256;
+    tcs_udp[ca].Light = ((raw_color_data[1] << 8) | raw_color_data[2])/256;
+    tcs_udp[ca].Red = ((raw_color_data[3] << 8) | raw_color_data[4])/256;
+    tcs_udp[ca].Green = ((raw_color_data[5] << 8) | raw_color_data[6])/256;
+    tcs_udp[ca].Blue = ((raw_color_data[7] << 8) | raw_color_data[8])/256;
 
     /*//code used to know if data is send properly
     printf("Light intensity: %d   Red: %d   Green: %d   Blue: %d   ite: %d\n", tcs_udp[ca].Light, tcs_udp[ca].Red, tcs_udp[ca].Green, tcs_udp[ca].Blue, ca);    
